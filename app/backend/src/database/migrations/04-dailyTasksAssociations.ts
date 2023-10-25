@@ -40,6 +40,12 @@ export default {
         },
         field: 'responsible_id',
       },
+      isFinished: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        field: 'is_finished',
+      },
       createdAt: {
         type: DataTypes.STRING,
         allowNull: false,

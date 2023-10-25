@@ -3,6 +3,7 @@ import {
   DataTypes, InferAttributes,
   InferCreationAttributes,
   Model,
+  Sequelize,
 } from 'sequelize';
 import db from '.';
 import SequelizeUsers from './SequelizeUsers';

@@ -15,6 +15,7 @@ InferCreationAttributes<SequelizeDailyTasksAssociations>> {
   declare dailyTaskId: number;
   declare taskId: number;
   declare responsibleId: number;
+  declare isFinished: boolean;
   declare createdAt: string;
   declare updatedAt: string;
 }
@@ -54,6 +55,12 @@ SequelizeDailyTasksAssociations.init({
       key: 'id',
     },
     field: 'responsible_id',
+  },
+  isFinished: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'is_finished',
   },
   createdAt: {
     type: DataTypes.STRING,

@@ -1,6 +1,7 @@
 import { ServiceResponse } from "../interfaces/ServiceResponse";
 import ITask from "../interfaces/ITask";
 import TasksModel from "../models/TasksModel";
+import { INTERNAL_ERROR, NOT_FOUND, NO_TASKS_FOUND, OK } from "../helpers/mapStrings";
 
 export default class TasksService {
     private taskModel = new TasksModel();
@@ -9,10 +10,10 @@ export default class TasksService {
         try {
             const tasks = await this.taskModel.findAll();
             
-            return { status: 'successful', data: tasks }; 
+            return { status: OK, data: tasks }; 
         } catch (error) {
             const { message } = error as Error;
-            return { status: 'notFound', data: { message } };
+            return { status: NOT_FOUND, data: { message } };
         }
     }
 
@@ -20,10 +21,10 @@ export default class TasksService {
         try {
             const task = await this.taskModel.create(newTask);
             
-            return { status: 'successful', data: task }; 
+            return { status: OK, data: task }; 
         } catch (error) {
             const { message } = error as Error;
-            return { status: 'internalError', data: { message } };
+            return { status: INTERNAL_ERROR, data: { message } };
         }
     }
 
@@ -31,13 +32,13 @@ export default class TasksService {
         try {
             const task = await this.taskModel.update(id, newTask);
             
-            return { status: 'successful', data: task }; 
+            return { status: OK, data: task }; 
         } catch (error) {
             const { message } = error as Error;
 
-            if(message === 'No tasks found') return { status: 'notFound', data: { message } };
+            if(message === NO_TASKS_FOUND) return { status: NOT_FOUND, data: { message } };
 
-            return { status: 'internalError', data: { message } };
+            return { status: INTERNAL_ERROR, data: { message } };
         }
     }
 

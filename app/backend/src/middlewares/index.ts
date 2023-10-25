@@ -5,6 +5,8 @@ import authorization from './authentication';
 import validateCreateTaskRequest from './validateCreateTaskRequest';
 import validateUpdateTaskRequest from './validateCreateTaskRequest';
 import validateCreateDailyTaskRequest from './validateCreateDailyTaskRequest';
+import validateUpdateTaskStatusRequest from './validateUpdateTaskStatusRequest';
+import validateUpdateDailyTaskRequest from './validateUpdateDailyTaskRequest';
 
 export {
   errorHandler,
@@ -13,5 +15,7 @@ export {
   authorization,
   validateCreateTaskRequest,
   validateUpdateTaskRequest,
-  validateCreateDailyTaskRequest
+  validateCreateDailyTaskRequest,
+  validateUpdateTaskStatusRequest,
+  validateUpdateDailyTaskRequest
 };

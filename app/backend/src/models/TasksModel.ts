@@ -1,6 +1,7 @@
 import ITask from "../interfaces/ITask";
 import SequelizeTasks from "../database/models/SequelizeTasks";
 import SequelizeDailyTasks from "../database/models/SequelizeDailyTasks";
+import { NO_TASKS_CREATED, NO_TASKS_FOUND, NO_TASKS_UPDATED, TASKS_DELETED } from "../helpers/mapStrings";
 
 export default class TasksModel {
     private sequelizeTasks = SequelizeTasks;
@@ -12,7 +13,7 @@ export default class TasksModel {
           attributes: ['name']
         }],
         });
-      if (!dbData) throw new Error("No tasks found");
+      if (!dbData) throw new Error(NO_TASKS_FOUND);
 
       return dbData as ITask[];
     }
@@ -20,7 +21,7 @@ export default class TasksModel {
     async create(newTask: ITask): Promise<ITask> {
       const dbData = await this.sequelizeTasks.create(newTask);
 
-      if (!dbData) throw new Error("No tasks created");
+      if (!dbData) throw new Error(NO_TASKS_CREATED);
 
       return dbData as ITask;
     }
@@ -28,7 +29,7 @@ export default class TasksModel {
     async update(taskId: number, newTask: ITask): Promise<ITask> {
       const dbData = await this.sequelizeTasks.findOne({ where: { taskId } });
 
-      if (!dbData) throw new Error("No tasks found");
+      if (!dbData) throw new Error(NO_TASKS_FOUND);
 
       const taskUpdated  = { updatedAt: new Date(), ...newTask };
 
@@ -36,7 +37,7 @@ export default class TasksModel {
 
       const response = await this.sequelizeTasks.findOne({ where: { taskId } });
       
-      if (!response) throw new Error("No tasks updated");
+      if (!response) throw new Error(NO_TASKS_UPDATED);
 
       return response as ITask;
     }
@@ -44,11 +45,11 @@ export default class TasksModel {
     async delete(taskId: number): Promise<string> {
       const dbData = await this.sequelizeTasks.findOne({ where: { taskId } });
 
-      if (!dbData) throw new Error("No tasks found");
+      if (!dbData) throw new Error(NO_TASKS_FOUND);
 
       await this.sequelizeTasks.destroy({ where: { taskId } });
 
-      return "Task deleted";
+      return TASKS_DELETED;
     }
 
 }

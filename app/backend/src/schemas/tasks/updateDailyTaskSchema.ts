@@ -1,7 +1,7 @@
 import * as joi from 'joi';
 
-const createDailyTaskSchema = joi.object({
-  date: joi.string().regex(/^\d{4}-\d{2}-\d{2}$/).required(),
+const updateDailyTaskSchema = joi.object({
+  dailyTaskId: joi.number().required(),
   tasks: joi.array().items(
     joi.object({
       taskId: joi.number().required(),
@@ -10,4 +10,4 @@ const createDailyTaskSchema = joi.object({
   )
 });
 
-export default createDailyTaskSchema;
+export default updateDailyTaskSchema;

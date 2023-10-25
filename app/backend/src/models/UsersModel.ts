@@ -2,6 +2,7 @@ import IUser from "../interfaces/IUser";
 import SequelizeUser from "../database/models/SequelizeUsers";
 import { compareSync, hash } from "bcryptjs";
 import { tokenGenerator } from "../auth/index";
+import { ACTIVE, EMAIL_ALREADY_REGISTERED, INACTIVE, NAME_ALREADY_REGISTERED, TOKEN_NOT_GENERATED, USER, USER_NOT_DELETED, USER_NOT_EDITED, USER_NOT_FOUND } from "../helpers/mapStrings";
 
 
 export default class UsersModel {
@@ -9,7 +10,7 @@ export default class UsersModel {
 
     async findAll(): Promise<IUser[]> {
         const dbData = await this.sequelizeUser.findAll();
-        if (!dbData) throw new Error("No users found");
+        if (!dbData) throw new Error(USER_NOT_FOUND);
 
         const response = dbData.map(({ dataValues }) => {
             const { password, ...userWithoutPassword } = dataValues as IUser;
@@ -26,7 +27,7 @@ export default class UsersModel {
             }
         });
 
-        if (dbEmail) throw new Error("Email already in database");
+        if (dbEmail) throw new Error(EMAIL_ALREADY_REGISTERED);
 
         const dbname = await this.sequelizeUser.findOne({
             where: {
@@ -34,14 +35,14 @@ export default class UsersModel {
             }
         });
 
-        if (dbname) throw new Error("name already in database");
+        if (dbname) throw new Error(NAME_ALREADY_REGISTERED);
         
         const { password } = user;
         const hashedPassword = await hash(password!, 10);
 
         user.password = hashedPassword as string;
-        user.accStatus = 'active';
-        user.accType = 'user';
+        user.accStatus = ACTIVE;
+        user.accType = USER;
 
         const newUser = await this.sequelizeUser.create(user as IUser);
         
@@ -49,7 +50,7 @@ export default class UsersModel {
 
         const token = tokenGenerator({ userId, email, accType, accStatus });
 
-        if(!token) throw new Error("Token not generated");
+        if(!token) throw new Error(TOKEN_NOT_GENERATED);
 
         return token;
     }
@@ -63,9 +64,9 @@ export default class UsersModel {
             }
         });
 
-        if (!dbUser) throw new Error("User not found");
+        if (!dbUser) throw new Error(USER_NOT_FOUND);
 
-        if (dbUser.accStatus === 'inactive') throw new Error("Acc inactive");
+        if (dbUser.accStatus === INACTIVE) throw new Error("Acc inactive");
 
         if(!password) throw new Error("Password not provided");
 
@@ -77,7 +78,7 @@ export default class UsersModel {
 
         const token = tokenGenerator({ userId, email, accType, accStatus });
 
-        if(!token) throw new Error("Token not generated");
+        if(!token) throw new Error(TOKEN_NOT_GENERATED);
 
         return token;
     }
@@ -90,7 +91,7 @@ export default class UsersModel {
             }
         });
 
-        if (!userDb) throw new Error("User not found");
+        if (!userDb) throw new Error(USER_NOT_FOUND);
 
         if (user.password) {
             const hashedPassword = await hash(user.password, 10);
@@ -114,7 +115,7 @@ export default class UsersModel {
             }
         });
 
-        if(!editedUser) throw new Error("User not edited");
+        if(!editedUser) throw new Error(USER_NOT_EDITED);
 
         const { password, ...editedUserWithoutPassword } = editedUser.dataValues as IUser;
 
@@ -129,9 +130,9 @@ export default class UsersModel {
             }
         });
 
-        if (!usesrdb) throw new Error("User not found");
+        if (!usesrdb) throw new Error(USER_NOT_FOUND);
         
-        await this.sequelizeUser.update({ accStatus: "inactive" }, {
+        await this.sequelizeUser.update({ accStatus: INACTIVE }, {
             where: {
                 userId
             }
@@ -143,7 +144,7 @@ export default class UsersModel {
             }
         });
 
-        if (!userToDelete) throw new Error("User not deleted");
+        if (!userToDelete) throw new Error(USER_NOT_DELETED);
 
         const { password, ...deletedUserWithoutPassword } = userToDelete?.dataValues as IUser;
         return deletedUserWithoutPassword as IUser;

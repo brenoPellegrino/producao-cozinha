@@ -4,6 +4,7 @@ import { tokenValidation } from '../auth';
 import mapStatusHTTP from "../helpers/mapStatusHTTP";
 import TasksService from "../services/TasksService";
 import ITasks from "../interfaces/ITask";
+import { ADMIN, OK } from "../helpers/mapStrings";
 
 export default class TasksController {
     private tasksService = new TasksService();
@@ -11,7 +12,7 @@ export default class TasksController {
     async findAll(_req: Request, res: Response): Promise<Response>{
         const tasks = await this.tasksService.findAll();
 
-        if(tasks.status !== 'successful') return res.status(mapStatusHTTP(tasks.status)).json(tasks.data);
+        if(tasks.status !== OK) return res.status(mapStatusHTTP(tasks.status)).json(tasks.data);
 
         return res.status(200).json(tasks);
     }
@@ -23,7 +24,7 @@ export default class TasksController {
 
         const { userId, accType } = tokenValidation(authorization);
 
-        if(accType !== 'admin') return res.status(401).json({ message: 'Unauthorized' });
+        if(accType !== ADMIN) return res.status(401).json({ message: 'Unauthorized' });
 
         if(!req.body.description) req.body.description = '';
 
@@ -38,7 +39,7 @@ export default class TasksController {
 
         const task = await this.tasksService.create(newTask);
 
-        if(task.status !== 'successful') return res.status(mapStatusHTTP(task.status)).json(task.data);
+        if(task.status !== OK) return res.status(mapStatusHTTP(task.status)).json(task.data);
 
         return res.status(201).json(task);
     }
@@ -51,9 +52,7 @@ export default class TasksController {
 
         const { userId, accType } = tokenValidation(authorization);
 
-        if(accType !== 'admin') return res.status(401).json({ message: 'Unauthorized' });
-
-        const { taskId } = req.params;
+        if(accType !== ADMIN) return res.status(401).json({ message: 'Unauthorized' });
 
         const newTask = {
             ...req.body,
@@ -63,7 +62,7 @@ export default class TasksController {
 
         const task = await this.tasksService.update(Number(taskToUpdate), newTask);
 
-        if(task.status !== 'successful') return res.status(mapStatusHTTP(task.status)).json(task.data);
+        if(task.status !== OK) return res.status(mapStatusHTTP(task.status)).json(task.data);
 
         return res.status(200).json(task);
     }

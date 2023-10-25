@@ -2,132 +2,179 @@ import SequelizeTasks from "../database/models/SequelizeTasks";
 import SequelizeDailyTasks from "../database/models/SequelizeDailyTasks";
 import IDailyTask from "../interfaces/IDailyTask";
 import SequelizeDailyTasksAssociations from "../database/models/SequelizeDailyTaskAssociations";
-import { Sequelize } from "sequelize";
 import IDailyTaskAssociation from "../interfaces/IDailyTaskAssociation";
 import sequelize = require("sequelize");
+import SequelizeUsers from "../database/models/SequelizeUsers";
+import {
+  NO_TASKS_FOUND_FOR_THIS_DAY,
+  RESPONSIBLE_NOT_FOUND,
+  THIS_DATE_IS_ALREADY_REGISTERED,
+  THIS_TASK_IS_NOT_REGISTRED_FOR_THIS_DAY,
+} from "../helpers/mapStrings";
+import { IDailyTaskResponse } from "../interfaces/IDailyTaskResponse";
 
 export default class DailyTaskModel {
-    private sequelizeDailyTasks = SequelizeDailyTasks;
-    private sequelizeTasks = SequelizeTasks;
-    private SequelizeDailyTasksAss = SequelizeDailyTasksAssociations;
+  private sequelizeDailyTasks = SequelizeDailyTasks;
+  private sequelizeUsers = SequelizeUsers;
+  private SequelizeDailyTasksAss = SequelizeDailyTasksAssociations;
 
-    async findAll(): Promise<SequelizeDailyTasks[]> {
-
-      const dbDailyTasks = await this.sequelizeDailyTasks.findAll({
-        include: [
-          {
-            association: 'creator',
-            attributes: ['name']
-          },
-          {
-            association: 'tasks',
-            attributes: ['title'],
-            through: {
-              attributes: ['daily_task_id'],
-              where: { dailyTaskId: sequelize.col('daily_task_associations.daily_task_id') },
-            },
-            include: [
-              {
-                association: 'responsibles',
-                attributes: ['name', 'id'],
-                through: { attributes: [] },
-                order: [['daily_task_associations', 'createdAt', 'DESC']],
-              },
-            ],
-          },
-        ],
-        attributes: { exclude: ['created_by'] }
+  async findBydate(date: string): Promise<SequelizeDailyTasks[]> {
+    const dateId = await this.sequelizeDailyTasks
+      .findOne({
+        where: { date },
+      })
+      .then((response) => {
+        if (!response) throw new Error(NO_TASKS_FOUND_FOR_THIS_DAY);
+        return response.dataValues.dailyTaskId;
       });
 
-      console.log("to aki");
-      if (!dbDailyTasks) throw new Error("No tasks found");
-
-      return dbDailyTasks;
-    }
-
-    async findAllByDay(searchDate?: string ): Promise<SequelizeDailyTasks[]> {
-      if (!searchDate) {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-
-        const formattedDate = `${year}-${month}-${day}`;
-        searchDate = formattedDate;
-      }
-      
-      const dbDailyTasks = await this.sequelizeDailyTasks.findAll({
-        include: [
-          {
-            association: 'creator',
-            attributes: ['name']
-          },
-          {
-            association: 'tasks',
-            attributes: ['title'],
-            include: [
-              {
-                association: 'responsibles',
-                attributes: ['name'],
-                through: { attributes: [] }
-              }
-            ],
-            through: { attributes: [] }
-          },
-        ],
-        attributes: { exclude: ['created_by'] },
-        where: { date: searchDate }
-      });
-      if (!dbDailyTasks) throw new Error("No tasks found");
-
-      return dbDailyTasks;
-    }
-
-  async findById(id: number): Promise<SequelizeDailyTasks> {
-    const dbDailyTask = await this.sequelizeDailyTasks.findByPk(id, {
+    const response = await SequelizeDailyTasks.findAll({
+      where: { dailyTaskId: dateId },
       include: [
         {
-          association: 'creator',
-          attributes: ['name']
-        },
-        {
-          association: 'tasks',
-          attributes: ['title'],
+          model: SequelizeTasks,
+          as: "tasks",
+          attributes: ["title"],
+          through: { attributes: ["is_finished", "updated_at"], as: "status" },
           include: [
             {
-              association: 'responsibles',
-              attributes: ['name'],
-              through: { attributes: [] }
-            }
+              model: SequelizeUsers,
+              as: "responsibles",
+              attributes: ["name"],
+              through: { where: { dailyTaskId: dateId }, attributes: [] },
+            },
           ],
-          through: { attributes: [] }
         },
       ],
-      attributes: { exclude: ['created_by'] }
+      attributes: ["dailyTaskId", "date"],
     });
-    if (!dbDailyTask) throw new Error("No task found");
 
-    return dbDailyTask;
+    return response;
   }
 
-  async create(dailyTask: IDailyTask, dailyAssociations: IDailyTaskAssociation[][]): Promise<SequelizeDailyTasks> {
+  async toggleFinished(
+    dailyTaskId: number,
+    taskId: number,
+    updatedAt: string
+  ): Promise<SequelizeDailyTasks> {
+    const dateString = await this.sequelizeDailyTasks
+      .findOne({ where: { dailyTaskId } })
+      .then((response) => response?.dataValues.date);
+
+    if (!dateString) throw new Error(NO_TASKS_FOUND_FOR_THIS_DAY);
+
+    const dbResponse = await this.SequelizeDailyTasksAss.findOne({
+      where: { dailyTaskId, taskId },
+    });
+
+    if (!dbResponse) throw new Error(THIS_TASK_IS_NOT_REGISTRED_FOR_THIS_DAY);
+
+    await this.SequelizeDailyTasksAss.update(
+      { isFinished: !dbResponse.dataValues.isFinished, updatedAt },
+      { where: { dailyTaskId, taskId } }
+    );
+
+    const updated = await this.findBydate(dateString);
+
+    const response = updated as unknown as SequelizeDailyTasks;
+
+    return response;
+  }
+
+  async create(
+    dailyTask: IDailyTask,
+    dailyAssociations: IDailyTaskAssociation[][]
+  ): Promise<SequelizeDailyTasks> {
+    const isDateAlreadyRegistered = await this.sequelizeDailyTasks.findOne({
+      where: { date: dailyTask.date },
+    });
+
+    const validUserIds = await this.sequelizeUsers
+      .findAll()
+      .then((response) => response.map(({ dataValues }) => dataValues.userId));
+
+    dailyAssociations.map((taskOfTheDay) => {
+      taskOfTheDay.map(({ responsibleId }) => {
+        if (!validUserIds.includes(responsibleId))
+          throw new Error(RESPONSIBLE_NOT_FOUND(responsibleId));
+      });
+    });
+
+    if (isDateAlreadyRegistered)
+      throw new Error(THIS_DATE_IS_ALREADY_REGISTERED);
+
     const createdDailyTask = await this.sequelizeDailyTasks.create(dailyTask);
-    const newDailyTaskId = createdDailyTask.dataValues.dailyTaskId;
 
-    await Promise.all(dailyAssociations.map(async (taskOfTheDay) => {
-      await Promise.all(taskOfTheDay.map(async (association) => {
-        await this.SequelizeDailyTasksAss.create(
-          { 
-            ...association,
-            dailyTaskAssociationId: 0,
-            dailyTaskId: createdDailyTask.dataValues.dailyTaskId
-          });
-      }));
-    }));
+    await Promise.all(
+      dailyAssociations.map(async (taskOfTheDay) => {
+        await Promise.all(
+          taskOfTheDay.map(async (association) => {
+            await this.SequelizeDailyTasksAss.create({
+              ...association,
+              dailyTaskAssociationId: 0,
+              dailyTaskId: createdDailyTask.dataValues.dailyTaskId,
+            });
+          })
+        );
+      })
+    );
 
+    const created = await this.findBydate(dailyTask.date);
+
+    const response = created as unknown as SequelizeDailyTasks;
+
+    return response;
+  }
+
+  async update(
+    dailyTaskId: number,
+    tasks: IDailyTaskAssociation[][]
+  ): Promise<SequelizeDailyTasks> {
+    const dateString = await this.sequelizeDailyTasks
+      .findOne({ where: { dailyTaskId } })
+      .then((response) => response?.dataValues.date);
+
+    if (!dateString) throw new Error(NO_TASKS_FOUND_FOR_THIS_DAY);
+
+    const validUserIds = await this.sequelizeUsers
+      .findAll()
+      .then((response) => response.map(({ dataValues }) => dataValues.userId));
+
+    tasks.map((taskOfTheDay) => {
+      taskOfTheDay.map(({ responsibleId }) => {
+        if (!validUserIds.includes(responsibleId))
+          throw new Error(RESPONSIBLE_NOT_FOUND(responsibleId));
+      });
+    });
     
-    const created = await this.findById(newDailyTaskId);
+    const dataDb = await this.sequelizeDailyTasks.findOne({
+      where: { dailyTaskId },
+    });
 
-    return created;
+    if (!dataDb) throw new Error(NO_TASKS_FOUND_FOR_THIS_DAY);
+
+    await this.SequelizeDailyTasksAss.destroy({ where: { dailyTaskId } });
+    
+    const createdAt = dataDb.dataValues.createdAt;
+
+    await Promise.all(
+      tasks.map(async (taskOfTheDay) => {
+        await Promise.all(
+          taskOfTheDay.map(async (association) => {
+            const updateValues = {
+              ...association,
+              createdAt,
+              dailyTaskAssociationId: 0,
+              dailyTaskId,
+            };
+            await this.SequelizeDailyTasksAss.create(updateValues);
+          })
+        );
+      })
+    );
+
+    const response = await this.findBydate(dateString) as unknown as SequelizeDailyTasks;
+
+    return response;
   }
 }

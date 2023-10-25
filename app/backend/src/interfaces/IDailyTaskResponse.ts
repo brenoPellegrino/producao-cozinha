@@ -1,18 +1,22 @@
+interface IStatus {
+  is_finished: boolean,
+  updated_at: string
+}
+
 interface IUserName {
   name: string
 }
 
 interface ITasksOfTheDay{
-  title: string,
-  responsibles: IUserName[]
+  dataValues: {
+    title: string,
+    responsibles: IUserName[]
+  }
 }
 
 export interface IDailyTaskResponse {
-  id: number,
+  dailyTaskId: number,
   date: string,
-  createdBy: number,
-  createdAt: string,
-  updatedAt: string,
-  creator: IUserName
-  tasks: ITasksOfTheDay[]
+  tasks: ITasksOfTheDay[],
+  status: IStatus[]
 }

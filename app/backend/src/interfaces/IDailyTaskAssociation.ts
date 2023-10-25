@@ -5,6 +5,7 @@ export default interface IDailyTaskAssociation {
   dailyTaskId?: number,
   taskId: number,
   responsibleId: number,
+  isFinished: boolean,
   createdAt: string,
   updatedAt: string,
 };
