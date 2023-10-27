@@ -1,68 +1,52 @@
-import { useCallback, useEffect, useState } from "react";
-import ListTransaction from "../../components/ListTransactions";
-import ITransaction from "../../interfaces/ITransaction";
-import api from "../../api";
-import RegisterPayment from "../../components/RegisterNewPayment";
-import "./Home.css";
+import { useNavigate } from "react-router-dom";
 import RedirectButton from "../../components/RedirectButton";
+import { useUserContext } from "../../context/userContext/useUser";
+import { useEffect, useState } from "react";
 import Menu from "../../components/Menu";
+import api from "../../services/api";
+import DailyTasksComponent from "../../components/DailyTasksComponent";
+import SearchBarComponent from "../../components/searchBarComponent";
+// import TasksComponent from "../../components/TasksComponent";
 
 export default function Home() {
-  const token = localStorage.getItem("@token");
+  const { user, setUser } = useUserContext();
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  
-  const [transactions, setTransactions] = useState<ITransaction[]>([]);
-  const [shoudReload, setShouldReload] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  const updateTransactions = useCallback(async () => {
-    try {
-      const response = await api.get("/transactions", {
+  const authorization = localStorage.getItem("@token") as string;
+  if (!authorization) {
+    navigate("/");
+  }
+
+  useEffect(() => {
+    const recoverUserInfo = async () => {
+      const authorization = localStorage.getItem("@token") as string;
+      const { data } = await api.get("/users/myUser", {
         headers: {
-          authorization: `${token}`,
+          authorization: authorization,
         },
       });
 
-      return response.data.data;
-    } catch (error) {
-      console.log(error);
-      return null;
-    }
-  }, [token]);
+      const { userId, accType } = data;
 
-  useEffect(() => {
-    
-    async function fetchData() {
-      const apiResponse = await updateTransactions()
-        .then((response) => response)
-        .catch((error) => console.log(error));
+      setUser({ userId, accType, token: authorization });
+    };
 
-      if (!apiResponse) {
-        setTransactions([]);
-      } else {
-        setTransactions(apiResponse);
-      }
-    }
-    fetchData();
-    setShouldReload(false);
-  }, [updateTransactions, shoudReload]);
-
-  if (!token) {
-    return window.location.href = "/";
-  }
+    if (!user) recoverUserInfo();
+  }, [user, setUser]);
 
   return (
     <div>
-      <div className="menu-container">
-        <Menu />
-      </div>
-      <div className="registerPayment">
-        <RegisterPayment setShouldReload={setShouldReload} />
-      </div>
-      <ListTransaction transactions={transactions} />
-      <div className="logout-btn">
-        <RedirectButton path="/" name="Logout" clearToken={true} />
-      </div>
-      <RedirectButton path="/editAcc" name="Edit Account" clearToken={false} />
+      <Menu />
+      <SearchBarComponent
+        setSearchTerm={setSearchTerm}
+        searchTerm={searchTerm}
+        inputType="date"
+        placeholder="Search by date"
+      />
+      <DailyTasksComponent fetchDate={searchTerm} />
+      <RedirectButton path="/" name="Logout" clearToken={true} />
     </div>
   );
 }

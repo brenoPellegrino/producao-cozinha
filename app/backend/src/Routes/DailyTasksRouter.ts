@@ -5,7 +5,7 @@ import { authorization, validateUpdateTaskStatusRequest, validateCreateDailyTask
 const router = Router();
 const dailyTasksCotroller = new DailyTasksController();
 
-router.get('/',
+router.get('/:date',
 (req: Request, res: Response) => dailyTasksCotroller.findAll(req, res)
 );
 
@@ -25,6 +25,11 @@ router.patch('/',
 authorization,
 validateUpdateDailyTaskRequest,
 (req: Request, res: Response) => dailyTasksCotroller.update(req, res)
+);
+
+router.delete('/:dailyTaskId',
+authorization,
+(req: Request, res: Response) => dailyTasksCotroller.delete(req, res)
 );
 
 export default router;

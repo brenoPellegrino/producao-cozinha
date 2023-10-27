@@ -9,6 +9,10 @@ router.get('/',
 authorization,
 (req: Request, res: Response) => userController.findAll(req, res));
 
+router.get('/myUser',
+authorization,
+(req: Request, res: Response) => userController.findMyUser(req, res));
+
 router.post('/login',
 validateLoginRequest,
 (req: Request, res: Response) => userController.login(req, res));

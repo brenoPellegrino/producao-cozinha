@@ -11,7 +11,7 @@ export default class TasksController {
     private dailyTasksService = new DailyTasksService();
 
     async findAll(req: Request, res: Response): Promise<Response>{
-        const { date } = req.body;
+        const { date } = req.params;
 
         if (typeof date !== STRING) return res.status(400).json({ message: 'Invalid date' });
 
@@ -131,5 +131,22 @@ export default class TasksController {
 
         return res.status(200).json(ServiceResponse);
     };
+
+    async delete(req: Request, res: Response): Promise<Response>{
+        const token = req.headers.authorization;
+        const { dailyTaskId } = req.params;
+        
+        if(!token) return res.status(401).json({ message: 'Token not found' });
+
+        const { accType } = tokenValidation(token);
+
+        if (accType !== ADMIN) return res.status(401).json({ message: 'Unauthorized' });
+
+        const serviceResponse = await this.dailyTasksService.delete(Number(dailyTaskId));
+
+        if(serviceResponse.status !== OK) return res.status(mapStatusHTTP(serviceResponse.status)).json(serviceResponse.data);
+
+        return res.status(200).json(serviceResponse);
+    }
     
 }

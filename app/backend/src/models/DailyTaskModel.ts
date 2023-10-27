@@ -12,6 +12,7 @@ import {
   THIS_TASK_IS_NOT_REGISTRED_FOR_THIS_DAY,
 } from "../helpers/mapStrings";
 import { IDailyTaskResponse } from "../interfaces/IDailyTaskResponse";
+import { date } from "joi";
 
 export default class DailyTaskModel {
   private sequelizeDailyTasks = SequelizeDailyTasks;
@@ -34,13 +35,13 @@ export default class DailyTaskModel {
         {
           model: SequelizeTasks,
           as: "tasks",
-          attributes: ["title"],
+          attributes: ["title", "taskId"],
           through: { attributes: ["is_finished", "updated_at"], as: "status" },
           include: [
             {
               model: SequelizeUsers,
               as: "responsibles",
-              attributes: ["name"],
+              attributes: ["name", "userId"],
               through: { where: { dailyTaskId: dateId }, attributes: [] },
             },
           ],
@@ -176,5 +177,23 @@ export default class DailyTaskModel {
     const response = await this.findBydate(dateString) as unknown as SequelizeDailyTasks;
 
     return response;
+  }
+
+  async delete(dailyTaskId: number): Promise<String> {
+    const dbData = await this.sequelizeDailyTasks
+      .findOne({ where: { dailyTaskId } });
+
+      
+    if (!dbData) throw new Error(NO_TASKS_FOUND_FOR_THIS_DAY);
+      
+    const dateString = dbData.dataValues.date;
+    
+
+    await this.SequelizeDailyTasksAss.destroy({ where: { dailyTaskId } });
+
+    await this.sequelizeDailyTasks.destroy({ where: { dailyTaskId } });
+    
+    return `Daily task of ${dateString} deleted`;
+
   }
 }

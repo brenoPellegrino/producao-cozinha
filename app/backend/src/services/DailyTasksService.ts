@@ -54,4 +54,15 @@ export default class TasksService {
         }  
     }
 
+    async delete(dailyTaskId: number): Promise<ServiceResponse<String>>{
+        try {
+            const modelResponse = await this.dailyTaskModel.delete(dailyTaskId);
+
+            return { status: OK, data: modelResponse };
+        } catch (error) {
+            const { message } = error as Error;
+            return { status: BAD_REQUEST, data: { message } };
+        }
+    }
+
 }

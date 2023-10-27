@@ -2,7 +2,7 @@ import { Response, Request } from "express";
 import UsersService from "../services/UsersService";
 import { tokenValidation } from '../auth';
 import mapStatusHTTP from "../helpers/mapStatusHTTP";
-import { ADMIN, INACTIVE, OK } from "../helpers/mapStrings";
+import { ADMIN, INACTIVE, INTERNAL_ERROR, OK } from "../helpers/mapStrings";
 
 export default class UsersController {
     private userService = new UsersService ();
@@ -20,6 +20,19 @@ export default class UsersController {
         if(users.status !== OK) return res.status(mapStatusHTTP(users.status)).json(users.data);
 
         return res.status(200).json(users);
+    }
+
+    async findMyUser(req: Request, res: Response): Promise<Response>{
+        const { authorization } = req.headers;
+        const decoded = tokenValidation(authorization as string);
+
+        const { userId, accType } = decoded;
+
+        const data = { userId, accType };
+
+        if(!userId) return res.status(mapStatusHTTP(INTERNAL_ERROR)).json("Internal error");
+
+        return res.status(200).json(data);
     }
 
     async createUser(req: Request, res: Response): Promise<Response>{

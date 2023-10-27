@@ -5,9 +5,9 @@ const updateDailyTaskSchema = joi.object({
   tasks: joi.array().items(
     joi.object({
       taskId: joi.number().required(),
-      responsibleIds: joi.array().items(joi.number()).required()
-    })
-  )
+      responsibleIds: joi.array().items(joi.number())
+    }).required()
+  ).required()
 });
 
 export default updateDailyTaskSchema;
