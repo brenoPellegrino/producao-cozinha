@@ -6,6 +6,7 @@ import Menu from "../../components/Menu";
 import api from "../../services/api";
 import DailyTasksComponent from "../../components/DailyTasksComponent";
 import SearchBarComponent from "../../components/SearchBarComponent";
+import { DailyTaskProvider } from "../../context/dailyTaskContext/DailyTaskProvider";
 // import TasksComponent from "../../components/TasksComponent";
 
 export default function Home() {
@@ -45,7 +46,9 @@ export default function Home() {
         inputType="date"
         placeholder="Search by date"
       />
-      <DailyTasksComponent fetchDate={searchTerm} />
+      <DailyTaskProvider>
+        <DailyTasksComponent fetchDate={searchTerm} />
+      </DailyTaskProvider>
       <RedirectButton path="/" name="Logout" clearToken={true} />
     </div>
   );
