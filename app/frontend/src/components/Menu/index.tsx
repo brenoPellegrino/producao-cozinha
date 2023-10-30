@@ -25,6 +25,13 @@ export default function Menu() {
           <div className="logout-btn">
             <RedirectButton path="/" name="Logout" clearToken={true} />
           </div>
+          <div>
+            <RedirectButton
+              path="/createDailyTask"
+              name="Create Daily Task"
+              clearToken={false}
+            />
+          </div>
         </div>
       ) : null}
     </div>

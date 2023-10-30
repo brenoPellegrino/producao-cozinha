@@ -1,40 +1,61 @@
-
 import { useUserContext } from "../../context/userContext/useUser.tsx";
 import { useEffect, useState } from "react";
 import api from "../../services/api/index.tsx";
 import TaskCard from "../TaskCard.tsx/index.tsx";
 import ITaskCardProps from "../../interfaces/ITaskCardProps.tsx";
+import ITaskComponentProps from "../../interfaces/ITaskComponentProps.tsx";
+import { useNavigate } from "react-router-dom";
 
-export default function TasksComponent() {
-  const [tasks, setTasks] = useState([]);
+export default function TasksComponent({ searchTask }: ITaskComponentProps) {
   const { user } = useUserContext();
+  const [tasks, setTasks] = useState([]);
+  const [renderTasks, setRenderTasks] = useState([]);
+  const [shallFetch, setShallFetch] = useState<boolean>(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) navigate("/home");
+
     const getTasks = async () => {
-      const { data } = await api.get('/tasks', {
+      const { data } = await api.get("/tasks", {
         headers: {
-          authorization: user!.token
-        }
+          authorization: user!.token,
+        },
       });
-      console.log(data.data);
-      
+
       setTasks(data.data);
+      return;
     };
 
-    getTasks()
+    if (shallFetch) {
+      getTasks();
+      setShallFetch(false);
+    }
+
+    const filteredTasks = tasks.filter((task: ITaskCardProps) =>
+      task.title.toLowerCase().includes(searchTask.toLowerCase())
+    );
+
+    setRenderTasks(filteredTasks);
 
     return;
-
-    }, [user]);
+  }, [user, searchTask]);
 
   return (
     <div>
-      {
-        tasks.map((task: ITaskCardProps) => {
-          return <TaskCard key={task.taskId} taskId={task.taskId} title={task.title} description={task.description} obs={task.obs} time={task.time} />
-        })
-      }
+      {renderTasks.map((task: ITaskCardProps) => {
+        return (
+          <TaskCard
+            key={task.taskId}
+            taskId={task.taskId}
+            title={task.title}
+            description={task.description}
+            obs={task.obs}
+            time={task.time}
+          />
+        );
+      })}
     </div>
-  )
+  );
 }

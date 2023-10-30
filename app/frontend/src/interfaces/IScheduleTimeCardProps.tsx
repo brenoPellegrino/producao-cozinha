@@ -1,4 +1,4 @@
 export default interface IScheduleTimeCardProps {
-  Name: string;
-  workTime: string;
+  employee: string;
+  workTime: number;
 }

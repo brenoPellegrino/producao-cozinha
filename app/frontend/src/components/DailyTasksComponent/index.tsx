@@ -1,32 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import IDailyTaskCardProps from "../../interfaces/IDailyTaskProps";
 import DailyTasksCard from "../DailyTasksCard";
 import api from "../../services/api";
 import { useUserContext } from "../../context/userContext/useUser";
+import { UseDailyTaskContext } from "../../context/dailyTaskContext/useDailyTaskContent";
 
 export default function DailyTasksComponent({
   fetchDate,
 }: {
   fetchDate?: string;
 }) {
-  const INITIAL_STATE = {
-    dailyTaskId: 0,
-    date: "",
-    tasks: [
-      {
-        dailyTaskId: 0,
-        taskId: 0,
-        title: "",
-        responsibles: [],
-        status: { is_finished: false },
-      },
-    ],
-  };
 
-  const [tasksOfTheDay, setTasksOfTheDay] =
-    useState<IDailyTaskCardProps>(INITIAL_STATE);
+  const { dailyTask, setDailyTask } = UseDailyTaskContext();
+
   const { user } = useUserContext();
-  const { dailyTaskId, tasks } = tasksOfTheDay;
 
   if (!fetchDate) {
     const today = new Date();
@@ -42,6 +29,10 @@ export default function DailyTasksComponent({
     return `${day}/${month}/${year}`;
   };
 
+  const shouldRender = () => {
+    return dailyTask === null;
+  }
+
   useEffect(() => {
     const recoverTasks = async () => {
       try {
@@ -54,21 +45,22 @@ export default function DailyTasksComponent({
           },
         });
 
-        console.log(data.data[0]);
-        setTasksOfTheDay(data.data[0]);
+        setDailyTask(data.data[0]);
+        console.log(dailyTask, "dailyTask");
       } catch (error) {
         console.error(error);
-        setTasksOfTheDay({ ...INITIAL_STATE, date: fetchDate! });
+        setDailyTask(null);
       }
     };
 
     recoverTasks();
+    console.log(dailyTask, "dailyTask");
   }, [fetchDate]);
 
-  return tasksOfTheDay.dailyTaskId === 0 ? (
-    <h3>Não há tarefas registradas nesta data</h3>
+  return shouldRender() ? (
+    <h3>Não há tarefas registradas para este dia ({`${formatDate(fetchDate!)}`})!</h3>
   ) : (
-    <div id={`dailyTask=${dailyTaskId}`}>
+    <div id={`dailyTask=${dailyTask!.dailyTaskId}`}>
       <h2>{formatDate(fetchDate!)}</h2>
       <table>
         <thead>
@@ -77,15 +69,16 @@ export default function DailyTasksComponent({
           <th>Status</th>
         </thead>
         <tbody>
-          {tasks.map(({ taskId, title, responsibles, status }) => {
+          {dailyTask!.tasks.map(({ taskId, title, responsibles, status }) => {
             return (
               <tr id={`taskId=${taskId}`}>
                 <DailyTasksCard
-                  dailyTaskId={dailyTaskId}
+                  dailyTaskId={dailyTask!.dailyTaskId}
                   taskId={taskId}
                   title={title}
                   responsibles={responsibles}
                   status={status}
+                  time={dailyTask!.time}
                 />
               </tr>
             );

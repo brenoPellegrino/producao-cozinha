@@ -35,7 +35,7 @@ export default class DailyTaskModel {
         {
           model: SequelizeTasks,
           as: "tasks",
-          attributes: ["title", "taskId"],
+          attributes: ["title", "taskId", "time"],
           through: { attributes: ["is_finished", "updated_at"], as: "status" },
           include: [
             {
