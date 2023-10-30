@@ -9,13 +9,6 @@ const validateCreateUserRequest: RequestHandler = (req: Request, res: Response, 
         return res.status(400).json({ message: isValid.error.message });
     }
 
-    const { cpfCnpj } = req.body;
-
-    if (!validateCpfCnpj(cpfCnpj)) {
-        
-        return res.status(400).json({ message: 'Invalid CPF/CNPJ' });
-    }
-
     next();
 }
 
