@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Menu from "../../components/Menu";
 import api from "../../services/api";
 import DailyTasksComponent from "../../components/DailyTasksComponent";
-import SearchBarComponent from "../../components/searchBarComponent";
+import SearchBarComponent from "../../components/SearchBarComponent";
 // import TasksComponent from "../../components/TasksComponent";
 
 export default function Home() {
