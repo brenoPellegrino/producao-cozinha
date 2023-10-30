@@ -28,10 +28,6 @@ export default function ScheduleTimeComponent() {
     setEmployees(newEmployees ? newEmployees : []);
   }, [dailyTask]);
 
-  console.log(dailyTask, "dailyTask");
-
-  console.log(employees, "employees");
-
   return (
     <div>
       {employees.map((employee) => (

@@ -78,6 +78,7 @@ export default function DailyTasksComponent({
                   title={title}
                   responsibles={responsibles}
                   status={status}
+                  time={dailyTask!.time}
                 />
               </tr>
             );
